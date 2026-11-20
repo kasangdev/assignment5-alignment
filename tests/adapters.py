@@ -8,12 +8,13 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizerBase
 
+from cs336_alignment.data import tokenize_prompt_and_output
 
 
 def run_tokenize_prompt_and_output(
-    prompt_strs: list[str],
-    output_strs: list[str],
-    tokenizer: PreTrainedTokenizerBase,
+        prompt_strs: list[str],
+        output_strs: list[str],
+        tokenizer: PreTrainedTokenizerBase,
 ) -> dict[str, Tensor]:
     """Tokenize the prompt and output strings, and construct a mask aligned with
     labels that is 1 for response tokens and 0 for other tokens (prompt or padding).
@@ -46,14 +47,14 @@ def run_tokenize_prompt_and_output(
                 with labels, with value 1 where the corresponding label token
                 is part of the response and 0 otherwise.
     """
-    raise NotImplementedError
+    return tokenize_prompt_and_output(prompt_strs, output_strs, tokenizer)
 
 
 def run_get_response_log_probs(
-    model: torch.nn.Module,
-    input_ids: torch.Tensor,
-    labels: torch.Tensor,
-    return_token_entropy: bool,
+        model: torch.nn.Module,
+        input_ids: torch.Tensor,
+        labels: torch.Tensor,
+        return_token_entropy: bool,
 ) -> dict[str, torch.Tensor]:
     """Get per-token conditional log-probabilities (given the previous tokens)
     from a causal language model, and optionally the entropy of the model's
@@ -82,13 +83,20 @@ def run_get_response_log_probs(
                 entropy for each position (present only if
                 return_token_entropy=True).
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import get_response_log_probs
+
+    return get_response_log_probs(
+        model,
+        input_ids,
+        labels,
+        return_token_entropy=return_token_entropy,
+    )
 
 
 def run_compute_rollout_rewards(
-    reward_fn: Callable[[str, str], dict[str, float]],
-    rollout_responses: list[str],
-    repeated_ground_truths: list[str],
+        reward_fn: Callable[[str, str], dict[str, float]],
+        rollout_responses: list[str],
+        repeated_ground_truths: list[str],
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute rewards for a list of rollout responses, along with metadata for
     the reward components.
@@ -114,15 +122,21 @@ def run_compute_rollout_rewards(
                 Reward statistics to log. At minimum, include the mean total
                 and format rewards over the rollout batch.
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import compute_rollout_rewards
+
+    return compute_rollout_rewards(
+        reward_fn,
+        rollout_responses,
+        repeated_ground_truths,
+    )
 
 
 def run_compute_group_normalized_rewards(
-    raw_rewards: torch.Tensor,
-    group_size: int,
-    baseline: Literal["mean", "none"] = "mean",
-    advantage_eps: float = 1e-6,
-    advantage_normalizer: Literal["std", "none", "mean"] = "std",
+        raw_rewards: torch.Tensor,
+        group_size: int,
+        baseline: Literal["mean", "none"] = "mean",
+        advantage_eps: float = 1e-6,
+        advantage_normalizer: Literal["std", "none", "mean"] = "std",
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute advantages by applying the requested baseline and normalization
     within each group.
@@ -153,16 +167,24 @@ def run_compute_group_normalized_rewards(
                 your choice of other statistics to log (e.g. mean, std, max/min
                 of rewards).
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import compute_group_normalized_rewards
+
+    return compute_group_normalized_rewards(
+        raw_rewards,
+        group_size,
+        baseline=baseline,
+        advantage_eps=advantage_eps,
+        advantage_normalizer=advantage_normalizer,
+    )
 
 
 def run_compute_policy_gradient_loss(
-    raw_rewards_or_advantages: torch.Tensor,
-    policy_log_probs: torch.Tensor,
-    importance_reweighting_method: Literal["none", "noclip", "grpo", "gspo"] = "none",
-    old_log_probs: torch.Tensor | None = None,
-    cliprange: float | None = None,
-    response_mask: torch.Tensor | None = None,
+        raw_rewards_or_advantages: torch.Tensor,
+        policy_log_probs: torch.Tensor,
+        importance_reweighting_method: Literal["none", "noclip", "grpo", "gspo"] = "none",
+        old_log_probs: torch.Tensor | None = None,
+        cliprange: float | None = None,
+        response_mask: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     """Compute the policy-gradient loss at every token, where
     raw_rewards_or_advantages is either the raw reward or an
@@ -200,14 +222,23 @@ def run_compute_policy_gradient_loss(
                 Statistics from the underlying loss call, such as
                 clip-fraction components.
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import compute_policy_gradient_loss
+
+    return compute_policy_gradient_loss(
+        raw_rewards_or_advantages,
+        policy_log_probs,
+        importance_reweighting_method=importance_reweighting_method,
+        old_log_probs=old_log_probs,
+        cliprange=cliprange,
+        response_mask=response_mask,
+    )
 
 
 def run_aggregate_loss_across_microbatch(
-    per_token_policy_gradient_loss: torch.Tensor,
-    mask: torch.Tensor,
-    loss_normalization: Literal["sequence", "constant"] = "sequence",
-    normalization_constant: int | None = None,
+        per_token_policy_gradient_loss: torch.Tensor,
+        mask: torch.Tensor,
+        loss_normalization: Literal["sequence", "constant"] = "sequence",
+        normalization_constant: int | None = None,
 ) -> torch.Tensor:
     """Aggregate the per-token policy-gradient loss according to the response
     mask and loss-normalization strategy.
@@ -232,28 +263,35 @@ def run_aggregate_loss_across_microbatch(
             A scalar containing the average loss. Make sure you can later call
             backward on this loss.
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import aggregate_loss_across_microbatch
+
+    return aggregate_loss_across_microbatch(
+        per_token_policy_gradient_loss,
+        mask,
+        loss_normalization=loss_normalization,
+        normalization_constant=normalization_constant,
+    )
 
 
 def run_grpo_train_step(
-    model: torch.nn.Module,
-    tokenizer: PreTrainedTokenizerBase,
-    optimizer: torch.optim.Optimizer,
-    gradient_accumulation_steps: int,
-    max_grad_norm: float | None,
-    reward_fn: Callable[[str, str], dict[str, float]],
-    repeated_prompts: list[str],
-    rollout_responses: list[str],
-    repeated_ground_truths: list[str],
-    group_size: int,
-    baseline: Literal["mean", "none"] = "mean",
-    advantage_eps: float = 1e-6,
-    advantage_normalizer: Literal["std", "none", "mean"] = "std",
-    importance_reweighting_method: Literal["none", "noclip", "grpo", "gspo"] = "none",
-    old_log_probs: torch.Tensor | None = None,
-    cliprange: float | None = None,
-    loss_normalization: Literal["sequence", "constant"] = "sequence",
-    normalization_constant: int | None = None,
+        model: torch.nn.Module,
+        tokenizer: PreTrainedTokenizerBase,
+        optimizer: torch.optim.Optimizer,
+        gradient_accumulation_steps: int,
+        max_grad_norm: float | None,
+        reward_fn: Callable[[str, str], dict[str, float]],
+        repeated_prompts: list[str],
+        rollout_responses: list[str],
+        repeated_ground_truths: list[str],
+        group_size: int,
+        baseline: Literal["mean", "none"] = "mean",
+        advantage_eps: float = 1e-6,
+        advantage_normalizer: Literal["std", "none", "mean"] = "std",
+        importance_reweighting_method: Literal["none", "noclip", "grpo", "gspo"] = "none",
+        old_log_probs: torch.Tensor | None = None,
+        cliprange: float | None = None,
+        loss_normalization: Literal["sequence", "constant"] = "sequence",
+        normalization_constant: int | None = None,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor | float]]:
     """Execute forward-and-backward passes, with gradient_accumulation_steps
     microbatches.
@@ -321,7 +359,28 @@ def run_grpo_train_step(
                 Dict with metadata from the underlying loss call, gradient norm
                 before clipping, and any other statistics you might want to log.
     """
-    raise NotImplementedError
+    from cs336_alignment.grpo import grpo_train_step
+
+    return grpo_train_step(
+        model=model,
+        tokenizer=tokenizer,
+        optimizer=optimizer,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        max_grad_norm=max_grad_norm,
+        reward_fn=reward_fn,
+        repeated_prompts=repeated_prompts,
+        rollout_responses=rollout_responses,
+        repeated_ground_truths=repeated_ground_truths,
+        group_size=group_size,
+        baseline=baseline,
+        advantage_eps=advantage_eps,
+        advantage_normalizer=advantage_normalizer,
+        importance_reweighting_method=importance_reweighting_method,
+        old_log_probs=old_log_probs,
+        cliprange=cliprange,
+        loss_normalization=loss_normalization,
+        normalization_constant=normalization_constant,
+    )
 
 
 """
@@ -331,10 +390,10 @@ RLHF / safety part of the Alignment assignment.
 
 
 def get_packed_sft_dataset(
-    tokenizer: PreTrainedTokenizerBase,
-    dataset_path: str | os.PathLike,
-    seq_length: int,
-    shuffle: bool,
+        tokenizer: PreTrainedTokenizerBase,
+        dataset_path: str | os.PathLike,
+        seq_length: int,
+        shuffle: bool,
 ) -> Dataset:
     """
     Given a tokenizer and a path to a dataset with instruction-tuning examples,
@@ -361,9 +420,9 @@ def get_packed_sft_dataset(
 
 
 def run_iterate_batches(
-    dataset: Dataset,
-    batch_size: int,
-    shuffle: bool,
+        dataset: Dataset,
+        batch_size: int,
+        shuffle: bool,
 ):
     """
     Given a PyTorch Dataset, return an iterable over batches of size `batch_size`.
@@ -384,8 +443,8 @@ def run_iterate_batches(
 
 
 def run_parse_mmlu_response(
-    mmlu_example: dict[str, Any],
-    model_output: str,
+        mmlu_example: dict[str, Any],
+        model_output: str,
 ) -> str | None:
     """
     Given an MMLU example and a model output, parse the model output into a
@@ -410,7 +469,7 @@ def run_parse_mmlu_response(
 
 
 def run_parse_gsm8k_response(
-    model_output: str,
+        model_output: str,
 ) -> str | None:
     """
     Given a GSM8K model output, parse the model output into a predicted numeric answer by
@@ -427,13 +486,13 @@ def run_parse_gsm8k_response(
 
 
 def run_compute_per_instance_dpo_loss(
-    lm: torch.nn.Module,
-    lm_ref: torch.nn.Module,
-    tokenizer: PreTrainedTokenizerBase,
-    beta: float,
-    prompt: str,
-    response_chosen: str,
-    response_rejected: str,
+        lm: torch.nn.Module,
+        lm_ref: torch.nn.Module,
+        tokenizer: PreTrainedTokenizerBase,
+        beta: float,
+        prompt: str,
+        response_chosen: str,
+        response_rejected: str,
 ) -> torch.Tensor:
     """
     Given two language models (`lm`, and the "reference model" `lm_ref`),

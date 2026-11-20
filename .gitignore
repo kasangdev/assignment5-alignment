@@ -166,3 +166,28 @@ cython_debug/
 #.idea/
 
 *.DS_Store
+
+# Local editor settings and credentials
+.idea/
+.vscode/
+*.iml
+.env.*
+!.env.example
+.netrc
+*.pem
+*.key
+
+# Local corpora, inference outputs, and weights
+/data/
+/outputs/
+/runs/
+/checkpoints/
+/models/
+/wandb/
+/*.pt
+/*.pth
+/*.safetensors
+/*.tar.gz
+/*.zip
+/cs336_spring2026_assignment5_alignment.pdf
+/cs336_spring2026_assignment5_supplement_safety_rlhf.pdf
