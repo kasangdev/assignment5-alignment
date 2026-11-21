@@ -40,16 +40,16 @@ uv pip install --python .venv/Scripts/python.exe -e . 'transformers==5.7.0' 'acc
 & '.\.venv\Scripts\python.exe' -m pytest tests/test_tiny_grpo_learning.py -s -q
 ```
 
-本机评估需要 GSM8K `test.jsonl` 与预先下载的 OLMo 模型目录。默认数据路径为 `data/gsm8k/test.jsonl`，也可以用 `--data-path` 指定。把下面的模型目录换成实际位置，先试跑 5 题，历史用时约 41 秒。[GSM8K 数据集](https://huggingface.co/datasets/openai/gsm8k) · [OLMo-2-0425-1B](https://huggingface.co/allenai/OLMo-2-0425-1B)
+本机评估需要 GSM8K `test.jsonl` 与预先下载的 OLMo 模型目录。默认数据路径为 `data/gsm8k/test.jsonl`，也可以用 `--data-path` 指定。下面的命令在项目根目录运行。按模型的实际存放位置设置 `$modelDirectory`，试跑 5 题的历史用时约 41 秒。[GSM8K 数据集](https://huggingface.co/datasets/openai/gsm8k) · [OLMo-2-0425-1B](https://huggingface.co/allenai/OLMo-2-0425-1B)
 
 ```powershell
-$modelDirectory = 'E:\Codex\models\OLMo-2-0425-1B'
+$modelDirectory = '.\models\OLMo-2-0425-1B'
 & '.\.venv\Scripts\python.exe' -m cs336_alignment.evaluate_prompting --backend transformers --model-id $modelDirectory --batch-size 1 --limit 5 --seed 0 --output-dir outputs/prompting_local_review
 ```
 
 ## 已验证范围
 
-OLMo-2-0425-1B 对 GSM8K 测试集前 50 题进行了三种提示词的推理评估，共生成 150 条回答，用时约 8 分 49 秒。日志保存在 `outputs/prompting_local_50q/`。
+OLMo-2-0425-1B 对 GSM8K 测试集前 50 题进行了三种提示词的推理评估，共生成 150 条回答，用时约 8 分 49 秒。采样沿用 Transformers 5.7.0 的默认 `top_k=50`。本地日志目录为 `outputs/prompting_local_50q/`。
 
 | 提示词 | 答对 | 格式通过 |
 | --- | ---: | ---: |
