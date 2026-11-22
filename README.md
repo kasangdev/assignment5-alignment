@@ -1,14 +1,23 @@
 # CS336 Spring 2026 Assignment 5: Alignment
 
-For a full description of the assignment, see the assignment handout at
-[cs336_spring2026_assignment5_alignment.pdf](https://github.com/stanford-cs336/assignment5-alignment/blob/main/cs336_spring2026_assignment5_alignment.pdf)
+这是 Stanford CS336 Spring 2026 Assignment 5 的个人自学项目，涵盖 GSM8K 提示词评估、GRPO 核心实现和第 4 节同策略 GRPO 实验。[课程主页](https://cs336.stanford.edu/) · [作业讲义](https://github.com/stanford-cs336/assignment5-alignment/blob/main/cs336_spring2026_assignment5_alignment.pdf)
 
-We will include a supplemental (and completely optional) assignment on safety alignment, instruction tuning, and RLHF at [cs336_spring2026_assignment5_supplement_safety_rlhf.pdf](https://github.com/stanford-cs336/assignment5-alignment/blob/main/cs336_spring2026_assignment5_supplement_safety_rlhf.pdf)
+## 第 4 节实验结果
 
-If you see any issues with the assignment handout or code, please feel free to
-raise a GitHub issue or open a pull request with a fix.
+在 OLMo-2-0425-1B 上，以 `r1_zero` 提示词和 `1e-6` 学习率训练 200 步，四个种子的终点平均准确率达到 **52.27%**，种子间样本标准差为 **1.34 个百分点**。
 
-这是 Stanford CS336 Spring 2026 A5 的个人自学实现。项目涵盖 GSM8K 提示词评估、GRPO 的组内优势与训练更新，以及离策略重要性加权。[课程主页](https://cs336.stanford.edu/) · [课程起始仓库](https://github.com/stanford-cs336/assignment5-alignment)
+| 随机种子 | 第 0 步准确率 | 第 200 步准确率 |
+| ---: | ---: | ---: |
+| 0 | 0.00% | 50.29% |
+| 1 | 0.20% | 52.64% |
+| 2 | 0.20% | 53.13% |
+| 3 | 0.00% | 53.03% |
+
+![四条曲线展示固定 r1_zero 评估下各随机种子从第 0 到 200 步的 GSM8K 验证准确率](docs/results/grpo-validation.png)
+
+所有训练组使用同一批 1,024 道题和固定的 `r1_zero` 评估提示词。题目来自 GSM8K 官方测试文件的前 1,024 条，也用于比较训练配置，因此在这里作为开发验证集使用。[全部 11 组实验](docs/experiments.md) · [终点汇总 CSV](docs/results/runs.csv) · [验证曲线 CSV](docs/results/validation.csv)
+
+本仓库提供核心实现、本地测试和实验证据。正式云端训练使用的入口和代码快照保存在本机实验存档中。离策略重要性加权的验证范围为单元测试。
 
 ## 代码导航
 
@@ -47,7 +56,7 @@ $modelDirectory = '.\models\OLMo-2-0425-1B'
 & '.\.venv\Scripts\python.exe' -m cs336_alignment.evaluate_prompting --backend transformers --model-id $modelDirectory --batch-size 1 --limit 5 --seed 0 --output-dir outputs/prompting_local_review
 ```
 
-## 已验证范围
+## 早期本地验证
 
 OLMo-2-0425-1B 对 GSM8K 测试集前 50 题进行了三种提示词的推理评估，共生成 150 条回答，用时约 8 分 49 秒。采样沿用 Transformers 5.7.0 的默认 `top_k=50`。本地日志目录为 `outputs/prompting_local_50q/`。
 
@@ -57,11 +66,11 @@ OLMo-2-0425-1B 对 GSM8K 测试集前 50 题进行了三种提示词的推理评
 | `r1_zero` | 0/50 | 22/50 |
 | `r1_zero_three_shot` | 12/50 | 47/50 |
 
-GRPO 课程主线测试记录为 **19 项通过**。20 步 CPU 验证中，模型在 `Hello` 后生成 `world` 的概率从 **6.63%** 升至 **60.21%**。OLMo 强化学习、全量验证、多种子消融和零优势样本跳过优化仍待完成。
+GRPO 课程主线测试记录为 **19 项通过**。20 步 CPU 验证中，模型在 `Hello` 后生成 `world` 的概率从 **6.63%** 升至 **60.21%**。
 
 ## 来源与发布
 
-`grpo.py` 和 `data.py` 是本项目的新增实现，自己编写且有权分享的源码可单独发布。如需保留课程项目结构，可通过官方仓库的 **Fork** 功能创建公开 fork，再提交有权公开的个人改动。参加正式课程时，分享解答仍须遵守适用的课程规则。[课程起始仓库](https://github.com/stanford-cs336/assignment5-alignment) · [GitHub 服务条款 D.5](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#5-license-grant-to-other-users) · [课程规则](https://cs336.stanford.edu/#honor-code)
+本仓库是课程起始仓库的 fork。`grpo.py` 和 `data.py` 是本项目的新增实现。课程还提供独立的可选补充讲义，涉及安全对齐、指令微调和 RLHF。[课程起始仓库](https://github.com/stanford-cs336/assignment5-alignment) · [补充讲义](https://github.com/stanford-cs336/assignment5-alignment/blob/main/cs336_spring2026_assignment5_supplement_safety_rlhf.pdf) · [课程规则](https://cs336.stanford.edu/#honor-code)
 
 上游 Spring 2026 分支未查到适用于整个仓库的通用许可证。数学评分器 `drgrpo_grader.py` 文件头标注 Apache 2.0，分发时按该许可证保留声明并附许可副本。课程测试、讲义和数据各自按来源核对授权。模型权重和数据可从对应来源获取。[评分器文件头](https://github.com/stanford-cs336/assignment5-alignment/blob/main/cs336_alignment/drgrpo_grader.py#L1-L17) · [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 

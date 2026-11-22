@@ -1,0 +1,12 @@
+run_dir,stage,variant,train_prompt,seed,learning_rate,status,completed_steps,initial_accuracy,last_validation_step,last_validation_accuracy,final_accuracy,best_validation_accuracy,measured_work_seconds
+learning-rate/standard__r1_zero__lr_1e-06__seed_0,learning-rate,standard,r1_zero,0,1e-06,completed,200,0.0,200,0.5029296875,0.5029296875,0.5029296875,1915.8932536616921
+learning-rate/standard__r1_zero__lr_1e-06__seed_1,learning-rate,standard,r1_zero,1,1e-06,completed,200,0.001953125,200,0.5263671875,0.5263671875,0.5380859375,2178.5296565759927
+learning-rate/standard__r1_zero__lr_1e-06__seed_2,learning-rate,standard,r1_zero,2,1e-06,completed,200,0.001953125,200,0.53125,0.53125,0.53125,1946.2555276304483
+learning-rate/standard__r1_zero__lr_1e-06__seed_3,learning-rate,standard,r1_zero,3,1e-06,completed,200,0.0,200,0.5302734375,0.5302734375,0.5439453125,1865.751317838207
+learning-rate/standard__r1_zero__lr_3e-05__seed_0,learning-rate,standard,r1_zero,0,3e-05,completed,200,0.0,200,0.0,0.0,0.0,2101.7916228268296
+prompt/standard__question_only__lr_1e-06__seed_0,prompt,standard,question_only,0,1e-06,completed,200,0.0,200,0.0,0.0,0.001953125,2091.3358476795256
+prompt/standard__question_only__lr_1e-06__seed_1,prompt,standard,question_only,1,1e-06,completed,200,0.0009765625,200,0.0,0.0,0.001953125,2160.190089089796
+prompt/standard__r1_zero_three_shot__lr_1e-06__seed_0,prompt,standard,r1_zero_three_shot,0,1e-06,completed,200,0.0,200,0.0009765625,0.0009765625,0.009765625,2429.9676317684352
+prompt/standard__r1_zero_three_shot__lr_1e-06__seed_1,prompt,standard,r1_zero_three_shot,1,1e-06,completed,200,0.001953125,200,0.0048828125,0.0048828125,0.0107421875,2540.3186845965683
+standard/standard__r1_zero__lr_1e-05__seed_0,standard,standard,r1_zero,0,1e-05,completed,200,0.0,200,0.0,0.0,0.0576171875,2126.753226241097
+standard/standard__r1_zero__lr_3e-06__seed_0,standard,standard,r1_zero,0,3e-06,completed,200,0.0,200,0.0712890625,0.0712890625,0.0712890625,1643.5633114799857
